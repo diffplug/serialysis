@@ -81,7 +81,6 @@ public class SerialScan {
      * the correct sequence of bytes.
      */
     public SerialScan(InputStream in) throws IOException {
-        this.in = in;
         this.din = new DataInputStream(in);
         if (din.readShort() != STREAM_MAGIC
                 || din.readShort() != STREAM_VERSION)
@@ -292,8 +291,7 @@ public class SerialScan {
 
     private void classAnnotation(ClassDesc desc) throws IOException {
         // we currently throw away the annotation
-        Object x;
-        while ((x = readObjectOrEnd()) != END)
+        while (readObjectOrEnd() != END)
             ;
     }
 
@@ -446,6 +444,7 @@ public class SerialScan {
         abstract Class<?> arrayComponentClass();
         public abstract String toString();
 
+        @SuppressWarnings("unused")
         private final String name;
     }
 
@@ -669,7 +668,6 @@ public class SerialScan {
     }
 
     private static final SEntity END = new SString("END");
-    private final InputStream in;
     private final DataInputStream din;
     private final List<SEntity> handles = new ArrayList<SEntity>();
 }

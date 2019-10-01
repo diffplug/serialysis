@@ -39,15 +39,8 @@
 
 package net.mcmanus.eamonn.serialysis;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Stack;
-import javax.management.Query;
-import javax.management.QueryExp;
 
 class Trace {
     static final boolean TRACE = false;

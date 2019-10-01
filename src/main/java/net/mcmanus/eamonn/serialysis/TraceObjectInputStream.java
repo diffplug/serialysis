@@ -63,7 +63,7 @@ class TraceObjectInputStream extends ObjectInputStream {
 
     protected Class<?> resolveClass(java.io.ObjectStreamClass desc) throws IOException, ClassNotFoundException {
         enter("ois.resolveClass", desc);
-        Class retValue;
+        Class<?> retValue;
         
         retValue = super.resolveClass(desc);
         exit(retValue);
@@ -72,7 +72,7 @@ class TraceObjectInputStream extends ObjectInputStream {
 
     protected Class<?> resolveProxyClass(String[] interfaces) throws IOException, ClassNotFoundException {
         enter("ois.resolveProxyClass", Arrays.toString(interfaces));
-        Class retValue;
+        Class<?> retValue;
         
         retValue = super.resolveProxyClass(interfaces);
         exit(retValue);

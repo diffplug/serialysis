@@ -42,8 +42,6 @@ package net.mcmanus.eamonn.serialysis;
 import java.io.IOException;
 import java.io.InputStream;
 
-import static net.mcmanus.eamonn.serialysis.Trace.enter;
-import static net.mcmanus.eamonn.serialysis.Trace.exit;
 import static net.mcmanus.eamonn.serialysis.Trace.show;
 
 class TraceInputStream extends InputStream {

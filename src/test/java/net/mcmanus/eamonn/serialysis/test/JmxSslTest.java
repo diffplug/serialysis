@@ -56,12 +56,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.management.MBeanServer;
-import javax.management.remote.JMXConnector;
-import javax.management.remote.JMXConnectorFactory;
-import javax.management.remote.JMXConnectorServer;
-import javax.management.remote.JMXConnectorServerFactory;
 import javax.management.remote.JMXServiceURL;
-import javax.management.remote.rmi.RMIConnection;
 import javax.management.remote.rmi.RMIConnectorServer;
 import javax.management.remote.rmi.RMIJRMPServerImpl;
 import javax.management.remote.rmi.RMIServer;
@@ -69,7 +64,6 @@ import javax.management.remote.rmi.RMIServerImpl;
 import javax.management.remote.rmi.RMIServerImpl_Stub;
 import javax.rmi.ssl.SslRMIClientSocketFactory;
 import javax.rmi.ssl.SslRMIServerSocketFactory;
-import javax.security.auth.Subject;
 import junit.framework.*;
 import net.mcmanus.eamonn.serialysis.SBlockData;
 import net.mcmanus.eamonn.serialysis.SObject;
@@ -213,16 +207,15 @@ public class JmxSslTest extends TestCase {
     }
 
     private static void decodeHexToFile(File f, String hex) throws IOException {
-        FileOutputStream fout = new FileOutputStream(f);
-        BufferedOutputStream bout = new BufferedOutputStream(fout);
-        if (hex.length() % 2 == 1)
-            throw new IllegalArgumentException("Odd length hex string");
-        for (int i = 0; i < hex.length(); i += 2) {
-            int x = Integer.parseInt(hex.substring(i, i + 2), 16);
-            bout.write(x);
+        try (FileOutputStream fout = new FileOutputStream(f);
+            BufferedOutputStream bout = new BufferedOutputStream(fout)) {
+            if (hex.length() % 2 == 1)
+                throw new IllegalArgumentException("Odd length hex string");
+            for (int i = 0; i < hex.length(); i += 2) {
+                int x = Integer.parseInt(hex.substring(i, i + 2), 16);
+                bout.write(x);
+            }
         }
-        bout.close();
-        fout.close();
     }
     
     private static int getRegistryPort(Registry reg) throws IOException {
@@ -240,12 +233,14 @@ public class JmxSslTest extends TestCase {
             throw new IOException("Can't handle ref type " + type);
     }
     
+    @SuppressWarnings("unused")
     private static int getRegistryPortUnicastRef(DataInputStream din)
     throws IOException {
         String host = din.readUTF();
         return din.readInt();
     }
     
+    @SuppressWarnings("unused")
     private static int getRegistryPortUnicastRef2(DataInputStream din)
     throws IOException {
         byte hasCSF = din.readByte();

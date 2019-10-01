@@ -117,7 +117,7 @@ public class SerialTest extends TestCase {
     }
 
     public void testEnum() throws Exception {
-        Enum en = ElementType.LOCAL_VARIABLE;  // random enum from Java SE
+        Enum<?> en = ElementType.LOCAL_VARIABLE;  // random enum from Java SE
         SObject so = (SObject) scan(en);
         assertEquals(en.getClass().getName(), so.getType());
         SString name = (SString) so.getField("<name>");
@@ -163,7 +163,8 @@ public class SerialTest extends TestCase {
     private static class Holder implements Serializable {
         private static final long serialVersionUID = 6922605819566649377L;
 
-        Object held;
+        @SuppressWarnings("unused")
+		Object held;
     }
 
     private SEntity scan(Object x) throws IOException {
