@@ -1,3 +1,8 @@
+plugins {
+	// bintray
+	id 'com.jfrog.bintray' version '1.8.4'
+}
+
 apply plugin: 'java'
 apply plugin: 'eclipse'
 
@@ -6,5 +11,142 @@ repositories {
 }
 
 dependencies {
-  testCompile 'junit:junit:3.8.2'
+  testCompile 'junit:junit:4.12'
 }
+
+///////////
+// MAVEN //
+///////////
+apply plugin: 'maven-publish'
+
+task sourcesJar(type: Jar) {
+	classifier = 'sources'
+	from sourceSets.main.allJava
+}
+
+// use markdown in javadoc
+def makeLink = { url, text -> "<a href=\"${url}\" style=\"text-transform: none;\">${text}</a>" }
+def javadocInfo = '<h2>' + makeLink("https://github.com/${org}/${name}", "${group}:${name}:${version}") +
+' by ' + makeLink('http://www.diffplug.com', 'DiffPlug') + '</h2>'
+
+def verSnapshot = { it.endsWith('-SNAPSHOT') ? 'snapshot' : it }
+
+javadoc {
+	// Where it's possible to name parameters and methods clearly enough
+	// that javadoc is not necessary, why make the code bigger?
+	//
+	// Thus, no javadoc warnings.
+	options.addStringOption('Xdoclint:none')
+	options.noTimestamp()
+	// setup the header
+	options.header javadocInfo
+	options.footer javadocInfo
+	// setup links
+	options.linksOffline('https://docs.oracle.com/javase/8/docs/api/', 'gradle/javadoc/java8')
+	options.linksOffline("https://docs.gradle.org/${gradle.gradleVersion}/javadoc/", 'gradle/javadoc/gradle')
+	options.linksOffline("https://diffplug.github.io/durian/javadoc/1.2.0}/", 'gradle/javadoc/durian')
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+	classifier = 'javadoc'
+	from javadoc.destinationDir
+}
+
+////////////////
+// PUBLISHING //
+////////////////
+def isSnapshot = project.version.endsWith('-SNAPSHOT')
+// pulls the credentials from either the environment variable or gradle.properties
+def cred = {
+	if (System.env[it] != null) {
+		return System.env[it]
+	} else if (project.hasProperty(it)) {
+		return project[it]
+	} else {
+		return 'unknown_' + it
+	}
+}
+
+model { publishing {
+	publications {
+		mavenJava(MavenPublication) {
+			from components.java
+			artifact sourcesJar
+			artifact javadocJar
+			pom.withXml {
+				// add MavenCentral requirements to the POM
+				asNode().children().last() + {
+					resolveStrategy = Closure.DELEGATE_FIRST
+					name project.name
+					description project.description
+					url "https://github.com/${project.org}/${project.name}"
+					scm {
+						url "https://github.com/${project.org}/${project.name}"
+						connection "scm:git:git://github.com/${project.org}/${project.name}"
+						developerConnection "scm:git:ssh:git@github.com/${project.org}/${project.name}"
+					}
+					licenses {
+						license {
+							name 'The Apache Software License, Version 2.0'
+							url 'http://www.apache.org/license/LICENSE-2.0.txt'
+							distribution 'repo'
+						}
+					}
+					developers {
+						developer {
+							id 'nedtwigg'
+							name 'Ned Twigg'
+							email 'ned.twigg@diffplug.com'
+						}
+					}
+				}
+			}
+		}
+	}
+	// if (isSnapshot) {
+	// 	// upload snapshots to oss.sonatype.org
+	// 	repositories { maven {
+	// 		url = 'https://oss.sonatype.org/content/repositories/snapshots'
+	// 		credentials {
+	// 			username = cred('nexus_user')
+	// 			password = cred('nexus_pass')
+	// 		}
+	// 	} }
+	// }
+	repositories {
+		maven {
+			url "http://artifactory.diffplug.local/artifactory/libs-${isSnapshot ? 'snapshot' : 'release'}-local"
+			credentials {
+				username "$dp_artifactory_user"
+				password "$dp_artifactory_pass"
+			}
+		}
+	}
+} }
+
+// if (!isSnapshot) {
+// 	////////////////////
+// 	// BINTRAY UPLOAD //
+// 	////////////////////
+// 	apply plugin: 'com.jfrog.bintray'
+// 	bintray {
+// 		user = cred('bintray_user')
+// 		key = cred('bintray_pass')
+// 		publications = ['mavenJava']
+// 		publish = true
+// 		pkg {
+// 			repo = 'opensource'
+// 			name = project.name
+// 			userOrg = project.org
+// 			version {
+// 				name = project.version
+// 				mavenCentralSync {
+// 					user = cred('nexus_user')
+// 					password = cred('nexus_pass')
+// 				}
+// 			}
+// 		}
+// 	}
+// 	publish.dependsOn(bintrayUpload)
+// 	bintrayUpload.dependsOn(['generatePomFileForPluginMavenPublication', jar, sourcesJar, javadocJar])
+// }
